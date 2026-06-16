@@ -3,68 +3,31 @@ import { BookOpen, User, Lock, ArrowRight, ShieldCheck, HelpCircle } from 'lucid
 import GlassCard from '../components/GlassCard';
 
 const LoginPage = ({ onLogin }) => {
-  const [role, setRole] = useState('admin'); // 'admin', 'registrar', 'instructor', 'student'
   const [username, setUsername] = useState('admin_cross');
   const [password, setPassword] = useState('••••••••');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
-  // Handle auto-population of fields based on role switch
-  const handleRoleChange = (selectedRole) => {
-    setRole(selectedRole);
-    setError('');
-    switch (selectedRole) {
-      case 'admin':
-        setUsername('admin_cross');
-        setPassword('••••••••');
-        break;
-      case 'registrar':
-        setUsername('registrar_dagi');
-        setPassword('••••••••');
-        break;
-      case 'instructor':
-        setUsername('prof_dagmawi');
-        setPassword('••••••••');
-        break;
-      case 'student':
-        setUsername('student_admas');
-        setPassword('••••••••');
-        break;
-      default:
-        break;
-    }
-  };
-
   const handleSubmit = (e) => {
     e.preventDefault();
     setError('');
+
+    // Verification check for admin credentials
+    if (username.trim() === '') {
+      setError('Username cannot be empty.');
+      return;
+    }
+
     setIsLoading(true);
 
     // Simulate network delay for premium experience
     setTimeout(() => {
       setIsLoading(false);
       
-      let displayName = 'Administrator';
-      let mappedRole = 'Super Admin';
-
-      if (role === 'admin') {
-        displayName = 'Dagmawi Amare';
-        mappedRole = 'Super Admin';
-      } else if (role === 'registrar') {
-        displayName = 'Abebe Bikila';
-        mappedRole = 'Registrar Head';
-      } else if (role === 'instructor') {
-        displayName = 'Dr. Yosef Kebede';
-        mappedRole = 'Senior Professor';
-      } else {
-        displayName = 'Helen Girma';
-        mappedRole = 'CS Student';
-      }
-
       onLogin({
         username,
-        name: displayName,
-        role: mappedRole
+        name: 'Dagmawi Amare',
+        role: 'Super Admin'
       });
     }, 1200);
   };
@@ -118,57 +81,16 @@ const LoginPage = ({ onLogin }) => {
         {/* Login Box */}
         <GlassCard hoverEffect={false}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '10px' }}>
-            Access Account
+            Admin Secure Access
           </h2>
           <p style={{ color: 'hsl(var(--text-muted))', fontSize: '0.82rem', marginBottom: '24px' }}>
-            Please select your role and enter your secure access credentials.
+            Enter your administrator authorization credentials to access the central console.
           </p>
-
-          {/* Role Pills Selectors */}
-          <div style={{ marginBottom: '24px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', fontWeight: '600', display: 'block', marginBottom: '10px' }}>
-              Select Portal Role
-            </span>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '8px' }}>
-              <button 
-                type="button" 
-                onClick={() => handleRoleChange('admin')}
-                className={`role-pill ${role === 'admin' ? 'active' : ''}`}
-                style={{ justifyContent: 'center' }}
-              >
-                Super Admin
-              </button>
-              <button 
-                type="button" 
-                onClick={() => handleRoleChange('registrar')}
-                className={`role-pill ${role === 'registrar' ? 'active' : ''}`}
-                style={{ justifyContent: 'center' }}
-              >
-                Registrar
-              </button>
-              <button 
-                type="button" 
-                onClick={() => handleRoleChange('instructor')}
-                className={`role-pill ${role === 'instructor' ? 'active' : ''}`}
-                style={{ justifyContent: 'center' }}
-              >
-                Instructor
-              </button>
-              <button 
-                type="button" 
-                onClick={() => handleRoleChange('student')}
-                className={`role-pill ${role === 'student' ? 'active' : ''}`}
-                style={{ justifyContent: 'center' }}
-              >
-                Student
-              </button>
-            </div>
-          </div>
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
             {/* Username */}
             <div className="input-group">
-              <label className="input-label" htmlFor="username">Username / ID Code</label>
+              <label className="input-label" htmlFor="username">Admin Username / ID Code</label>
               <div style={{ position: 'relative' }}>
                 <input
                   id="username"
@@ -186,9 +108,9 @@ const LoginPage = ({ onLogin }) => {
 
             {/* Password */}
             <div className="input-group">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', justifycontent: 'space-between', alignItems: 'center' }}>
                 <label className="input-label" htmlFor="password">Security Password</label>
-                <a href="#reset" style={{ fontSize: '0.78rem', color: 'hsl(var(--accent-cyan))', textDecoration: 'none', fontWeight: '500' }}>Forgot?</a>
+                <a href="#reset" style={{ fontSize: '0.78rem', color: 'hsl(var(--accent-cyan))', textDecoration: 'none', fontWeight: '500', marginLeft: 'auto' }}>Forgot?</a>
               </div>
               <div style={{ position: 'relative' }}>
                 <input
@@ -233,7 +155,7 @@ const LoginPage = ({ onLogin }) => {
                 </span>
               ) : (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  Secure Portal Login
+                  Secure Admin Login
                   <ArrowRight size={16} />
                 </span>
               )}
