@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useMemo, useState, useCallback, useEffect, useRef } from 'react';
-import seed, { EVAL_WEIGHTS, ACADEMIC_YEAR, SEMESTER } from '../data/seed';
+import { EVAL_WEIGHTS, ACADEMIC_YEAR, SEMESTER } from '../data/seed';
 import { dataSourceLabel, isSupabaseConfigured } from '../services/supabase';
 import * as trainersApi from '../services/trainersApi';
 import * as traineesApi from '../services/traineesApi';
@@ -10,16 +10,11 @@ import { selectAll, insertRow, updateRow, deleteRow, subscribeTable } from '../s
 
 const DataContext = createContext(null);
 
-const clone = (v) => JSON.parse(JSON.stringify(v));
 const TODAY = '2026-06-17';
 
-// True when a live Supabase backend is configured. Drives every mutation's
-// local-vs-remote branch. When false the app runs fully on the seed dataset.
+// IMPORTANT: Database-only mode. No mock data fallback.
+// All data MUST come from Supabase. If not configured, app will show empty data.
 const LIVE = isSupabaseConfigured;
-
-// In live mode every dataset hydrates from Supabase, so initial state is empty —
-// the app never shows mock data when connected. Offline, it boots on the seed.
-const initData = (arr) => (LIVE ? [] : clone(arr));
 
 // Client-supplied ids keep seed + live data identically shaped and let derived
 // joins (schedules.trainerId === t.id, etc.) keep working. Random tail avoids
@@ -36,31 +31,32 @@ const diffFields = (before, patch) => {
 };
 
 export function DataProvider({ children }) {
-  const [departments, setDepartments] = useState(() => initData(seed.departments));
-  const [centers, setCenters] = useState(() => initData(seed.centers));
-  const [rooms, setRooms] = useState(() => initData(seed.rooms));
-  const [courses, setCourses] = useState(() => initData(seed.courses));
-  const [trainers, setTrainers] = useState(() => initData(seed.trainers));
+  // Database-only mode: all arrays start empty, data loaded from Supabase
+  const [departments, setDepartments] = useState([]);
+  const [centers, setCenters] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [courses, setCourses] = useState([]);
+  const [trainers, setTrainers] = useState([]);
 
-  const [users, setUsers] = useState(() => initData(seed.users));
-  const [trainees, setTrainees] = useState(() => initData(seed.trainees));
-  const [schedules, setSchedules] = useState(() => initData(seed.schedules));
-  const [examApprovals, setExamApprovals] = useState(() => initData(seed.examApprovals));
-  const [complaints, setComplaints] = useState(() => initData(seed.complaints));
-  const [webinars, setWebinars] = useState(() => initData(seed.webinars));
+  const [users, setUsers] = useState([]);
+  const [trainees, setTrainees] = useState([]);
+  const [schedules, setSchedules] = useState([]);
+  const [examApprovals, setExamApprovals] = useState([]);
+  const [complaints, setComplaints] = useState([]);
+  const [webinars, setWebinars] = useState([]);
 
   // Trainer-submitted datasets — stateful so submissions appear live for admins.
-  const [attendanceRecords, setAttendanceRecords] = useState(() => initData(seed.attendanceRecords));
-  const [courseCoverage, setCourseCoverage] = useState(() => initData(seed.courseCoverage));
-  const [coopFollowups, setCoopFollowups] = useState(() => initData(seed.coopFollowups));
-  const [skillGapTraining, setSkillGapTraining] = useState(() => initData(seed.skillGapTraining));
+  const [attendanceRecords, setAttendanceRecords] = useState([]);
+  const [courseCoverage, setCourseCoverage] = useState([]);
+  const [coopFollowups, setCoopFollowups] = useState([]);
+  const [skillGapTraining, setSkillGapTraining] = useState([]);
 
-  const [assessmentResults, setAssessmentResults] = useState(() => initData(seed.assessmentResults));
-  const [cocRegistrations, setCocRegistrations] = useState(() => initData(seed.cocRegistrations));
-  const [trainerEvaluations, setTrainerEvaluations] = useState(() => initData(seed.trainerEvaluations));
+  const [assessmentResults, setAssessmentResults] = useState([]);
+  const [cocRegistrations, setCocRegistrations] = useState([]);
+  const [trainerEvaluations, setTrainerEvaluations] = useState([]);
 
-  // ---- Live-sync state -----------------------------------------------------
-  const [dataReady, setDataReady] = useState(!LIVE);
+  // ---- Live-sync state: always wait for database when in LIVE mode ---------
+  const [dataReady, setDataReady] = useState(false);
   const [auditLog, setAuditLog] = useState([]);
 
   // Refs mirror the latest arrays so mutation callbacks can snapshot for
@@ -605,14 +601,17 @@ export function DataProvider({ children }) {
       if (comps) setComplaints(comps);
 
       // Provide detailed error feedback
+      const allTablesFailed = failedTables.length === 18;
       if (failedTables.length > 0) {
-        if (failedTables.length > 5) {
-          notify(`Database sync failed: ${failedTables.length} tables unavailable. Running in offline mode.`, 'warning');
+        if (allTablesFailed) {
+          notify('⚠️ CRITICAL: Database connection failed. No data available. Please check Supabase configuration.', 'danger');
+        } else if (failedTables.length > 5) {
+          notify(`⚠️ Database sync failed: ${failedTables.length} tables unavailable. App functionality limited.`, 'warning');
         } else {
-          notify(`Database sync incomplete: ${failedTables.join(', ')} unavailable.`, 'warning');
+          notify(`⚠️ Database sync incomplete: ${failedTables.join(', ')} unavailable.`, 'warning');
         }
       } else {
-        notify('All data synced from database successfully.', 'info');
+        notify('✅ All data synced from database successfully.', 'success');
       }
 
       setDataReady(true);
