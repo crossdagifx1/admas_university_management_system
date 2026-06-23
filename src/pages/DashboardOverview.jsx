@@ -1,282 +1,138 @@
 import React from 'react';
-import { 
-  Users, 
-  GraduationCap, 
-  BookOpen, 
-  Layers, 
-  TrendingUp, 
-  TrendingDown, 
-  Calendar,
-  BellRing,
-  ArrowRight
-} from 'lucide-react';
+import { TriangleAlert, Users, GraduationCap, UserCog, ArrowRight, ClipboardList } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
-import { EnrollmentChart, DistributionChart } from '../components/CustomChart';
+import StatCard from '../components/ui/StatCard';
+import { Badge } from '../components/ui/Toolbar';
+import { DonutChart, DistributionChart } from '../components/CustomChart';
+import { useData } from '../context/DataContext';
 
-const DashboardOverview = ({ setActiveTab }) => {
-  // Mock Stats Data
-  const stats = [
-    { 
-      label: "Enrolled Students", 
-      value: "14,820", 
-      change: "+4.2%", 
-      isPositive: true, 
-      icon: GraduationCap, 
-      color: "hsl(var(--accent-teal))",
-      glow: "rgba(20, 184, 166, 0.15)"
-    },
-    { 
-      label: "Active Faculty", 
-      value: "580", 
-      change: "+1.8%", 
-      isPositive: true, 
-      icon: Users, 
-      color: "hsl(var(--accent-cyan))",
-      glow: "rgba(0, 229, 255, 0.15)"
-    },
-    { 
-      label: "Active Courses", 
-      value: "320", 
-      change: "+8.5%", 
-      isPositive: true, 
-      icon: BookOpen, 
-      color: "hsl(var(--accent-emerald))",
-      glow: "rgba(16, 185, 129, 0.15)"
-    },
-    { 
-      label: "Departments", 
-      value: "24", 
-      change: "0%", 
-      isPositive: true, 
-      icon: Layers, 
-      color: "hsl(var(--accent-gold))",
-      glow: "rgba(234, 179, 8, 0.15)"
-    }
+const DashboardOverview = ({ setActiveView }) => {
+  const { kpis, submissions, meta, departments, trainees, conflicts, complaints, trainerLoad } = useData();
+
+  const kpiCards = [
+    { label: 'Quality Alerts', value: kpis.qualityAlerts, icon: TriangleAlert, accent: 'hsl(var(--accent-rose))', glow: 'rgba(244,63,94,0.15)', hint: 'conflicts + open complaints' },
+    { label: 'Active Trainers', value: kpis.activeTrainers, icon: UserCog, accent: 'hsl(var(--accent-cyan))', glow: 'rgba(0,229,255,0.15)' },
+    { label: 'Total Trainees', value: kpis.totalTrainees, icon: GraduationCap, accent: 'hsl(var(--accent-teal))', glow: 'rgba(20,184,166,0.15)' },
+    { label: 'Total Users', value: kpis.totalUsers, icon: Users, accent: 'hsl(var(--accent-gold))', glow: 'rgba(234,179,8,0.15)' },
   ];
 
-  // Chart Mock Data
-  const enrollmentTrend = [
-    { label: '2022 A', value: 8200 },
-    { label: '2022 B', value: 9100 },
-    { label: '2023 A', value: 10400 },
-    { label: '2023 B', value: 11200 },
-    { label: '2024 A', value: 12800 },
-    { label: '2024 B', value: 13500 },
-    { label: '2025 A', value: 14820 }
-  ];
+  // trainees per department for donut
+  const traineeByDept = departments
+    .map((d) => ({ label: d.code, value: trainees.filter((t) => t.departmentId === d.id).length }))
+    .filter((x) => x.value > 0);
 
-  const facultyDistribution = [
-    { label: 'Comp. Sci', value: 124 },
-    { label: 'Eng. Tech', value: 98 },
-    { label: 'Business', value: 112 },
-    { label: 'Medicine', value: 86 },
-    { label: 'Social Sci', value: 75 },
-    { label: 'Natural Sci', value: 85 }
-  ];
+  const loadChart = trainerLoad.slice(0, 6).map((t) => ({ label: t.name.split(' ')[0], value: t.creditHours }));
 
-  const activities = [
-    { id: 1, action: "Academic calendar updated", details: "Fall Semester 2026 registration dates adjusted.", time: "10 mins ago", type: "system" },
-    { id: 2, action: "New faculty member onboarded", details: "Dr. Biruk Tadesse joined Department of Computer Science.", time: "1 hour ago", type: "faculty" },
-    { id: 3, action: "Curriculum expansion approved", details: "Artificial Intelligence BSc program curriculum review completed.", time: "3 hours ago", type: "curriculum" },
-    { id: 4, action: "Security patches applied", details: "LMS server maintenance and authorization patches deployed.", time: "1 day ago", type: "system" }
-  ];
+  const tileColors = ['hsl(var(--accent-cyan))', 'hsl(var(--accent-teal))', 'hsl(var(--accent-emerald))', 'hsl(var(--accent-gold))'];
 
   return (
-    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      
-      {/* Quick Stats Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px' }}>
-        {stats.map((stat, idx) => {
-          const Icon = stat.icon;
-          return (
-            <GlassCard key={idx} hoverEffect={true}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                <span style={{ fontSize: '0.85rem', color: 'hsl(var(--text-secondary))', fontWeight: '500' }}>
-                  {stat.label}
-                </span>
-                <div 
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '10px',
-                    backgroundColor: stat.glow,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: stat.color
-                  }}
-                >
-                  <Icon size={18} />
+    <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '22px' }}>
+      {/* context banner */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+        <Badge tone="info">{meta.academicYear} · {meta.semester}</Badge>
+        <span style={{ fontSize: '0.78rem', color: 'hsl(var(--text-muted))' }}>Data source: {meta.dataSourceLabel}</span>
+      </div>
+
+      {/* KPI grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '18px' }}>
+        {kpiCards.map((k) => <StatCard key={k.label} {...k} />)}
+      </div>
+
+      {/* TVET submissions overview */}
+      <GlassCard hoverEffect={false}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+          <ClipboardList size={18} color="hsl(var(--accent-cyan))" />
+          <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>TVET Submissions Overview</h3>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+          {submissions.map((s, i) => (
+            <div key={s.key} style={{ padding: '16px', borderRadius: '12px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '1.5rem', fontWeight: '800', fontFamily: 'Outfit', color: tileColors[i % tileColors.length] }}>{s.count}</span>
+              <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-secondary))', marginTop: '2px' }}>{s.label}</p>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+
+      {/* charts */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))', gap: '18px' }}>
+        <GlassCard hoverEffect={false}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '18px' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Trainer Workload</h3>
+              <p style={{ fontSize: '0.74rem', color: 'hsl(var(--text-muted))' }}>Total credit hours per trainer</p>
+            </div>
+            <button onClick={() => setActiveView('scheduling/trainer-load')} style={linkBtn}>Full report <ArrowRight size={12} /></button>
+          </div>
+          <DistributionChart data={loadChart} />
+        </GlassCard>
+
+        <GlassCard hoverEffect={false}>
+          <div style={{ marginBottom: '18px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Trainee Distribution</h3>
+            <p style={{ fontSize: '0.74rem', color: 'hsl(var(--text-muted))' }}>Enrollment by department</p>
+          </div>
+          <DonutChart data={traineeByDept} />
+        </GlassCard>
+      </div>
+
+      {/* alerts + complaints */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '18px' }}>
+        <GlassCard hoverEffect={false}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Scheduling Conflicts</h3>
+            <button onClick={() => setActiveView('scheduling/manage')} style={linkBtn}>Resolve <ArrowRight size={12} /></button>
+          </div>
+          {conflicts.length === 0 ? (
+            <p style={{ fontSize: '0.82rem', color: 'hsl(var(--text-muted))' }}>No conflicts detected.</p>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {conflicts.map((c, i) => (
+                <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'center', padding: '10px 12px', borderRadius: '10px', background: 'rgba(244,63,94,0.05)', border: '1px solid rgba(244,63,94,0.12)' }}>
+                  <TriangleAlert size={15} color="hsl(var(--accent-rose))" style={{ flexShrink: 0 }} />
+                  <div style={{ flex: 1 }}>
+                    <span style={{ fontSize: '0.8rem', color: 'hsl(var(--text-primary))', fontWeight: '500' }}>{c.detail}</span>
+                    <span style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', display: 'block' }}>{c.a} ↔ {c.b}</span>
+                  </div>
+                  <Badge tone="danger">{c.type}</Badge>
                 </div>
-              </div>
-
-              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: '1.8rem', fontWeight: '800', fontFamily: 'Outfit' }}>
-                  {stat.value}
-                </span>
-                <span 
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '2px',
-                    fontSize: '0.78rem',
-                    fontWeight: '600',
-                    color: stat.isPositive ? 'hsl(var(--accent-emerald))' : 'hsl(var(--accent-rose))',
-                    padding: '2px 6px',
-                    background: stat.isPositive ? 'rgba(16, 185, 129, 0.08)' : 'rgba(244, 63, 94, 0.08)',
-                    borderRadius: '6px'
-                  }}
-                >
-                  {stat.isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
-                  {stat.change}
-                </span>
-              </div>
-            </GlassCard>
-          );
-        })}
-      </div>
-
-      {/* Analytics Visualizations Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
-        
-        {/* Enrollment Trend Chart */}
-        <GlassCard hoverEffect={false}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Enrollment Trends</h3>
-              <p style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>Student headcount per academic semester</p>
+              ))}
             </div>
-            <div className="badge badge-info" style={{ gap: '4px' }}>
-              <TrendingUp size={12} /> Active Growth
-            </div>
-          </div>
-          <EnrollmentChart data={enrollmentTrend} />
+          )}
         </GlassCard>
 
-        {/* Faculty Distribution Chart */}
         <GlassCard hoverEffect={false}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div>
-              <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Faculty Allocation</h3>
-              <p style={{ fontSize: '0.75rem', color: 'hsl(var(--text-muted))' }}>Number of active instructors by department</p>
-            </div>
-            <button 
-              onClick={() => setActiveTab('faculty')}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'hsl(var(--accent-cyan))',
-                fontSize: '0.78rem',
-                fontWeight: '600',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
-            >
-              Manage Staff <ArrowRight size={12} />
-            </button>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>Recent Complaints</h3>
+            <button onClick={() => setActiveView('complaints')} style={linkBtn}>Manage <ArrowRight size={12} /></button>
           </div>
-          <DistributionChart data={facultyDistribution} />
-        </GlassCard>
-
-      </div>
-
-      {/* Announcements and Recent Feed Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-        
-        {/* Recent Activities list */}
-        <GlassCard hoverEffect={false}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>System Activity Stream</h3>
-            <span style={{ fontSize: '0.72rem', color: 'hsl(var(--accent-cyan))', fontWeight: '600' }}>Live Logs</span>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {activities.map((act) => (
-              <div 
-                key={act.id} 
-                style={{ 
-                  display: 'flex', 
-                  gap: '12px', 
-                  paddingBottom: '12px',
-                  borderBottom: '1px solid rgba(255, 255, 255, 0.03)',
-                  alignItems: 'flex-start'
-                }}
-              >
-                <div 
-                  style={{
-                    width: '6px',
-                    height: '6px',
-                    borderRadius: '50%',
-                    backgroundColor: act.type === 'system' ? 'hsl(var(--accent-cyan))' : act.type === 'faculty' ? 'hsl(var(--accent-teal))' : 'hsl(var(--accent-gold))',
-                    marginTop: '6px',
-                    boxShadow: `0 0 8px ${act.type === 'system' ? 'hsl(var(--accent-cyan))' : act.type === 'faculty' ? 'hsl(var(--accent-teal))' : 'hsl(var(--accent-gold))'}`
-                  }}
-                />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {complaints.slice(0, 4).map((c) => (
+              <div key={c.id} style={{ display: 'flex', gap: '10px', alignItems: 'center', paddingBottom: '10px', borderBottom: '1px solid rgba(255,255,255,0.03)' }}>
                 <div style={{ flex: 1 }}>
-                  <h4 style={{ fontSize: '0.85rem', fontWeight: '600', color: 'hsl(var(--text-primary))' }}>
-                    {act.action}
-                  </h4>
-                  <p style={{ fontSize: '0.78rem', color: 'hsl(var(--text-secondary))', marginTop: '2px' }}>
-                    {act.details}
-                  </p>
-                  <span style={{ fontSize: '0.7rem', color: 'hsl(var(--text-muted))', display: 'block', marginTop: '4px' }}>
-                    {act.time}
-                  </span>
+                  <span style={{ fontSize: '0.82rem', color: 'hsl(var(--text-primary))', fontWeight: '500' }}>{c.subject}</span>
+                  <span style={{ fontSize: '0.72rem', color: 'hsl(var(--text-muted))', display: 'block' }}>{c.category} · {c.raisedBy}</span>
                 </div>
+                <Badge tone={c.status === 'Resolved' ? 'success' : c.status === 'Open' ? 'danger' : 'warning'}>{c.status}</Badge>
               </div>
             ))}
           </div>
         </GlassCard>
-
-        {/* Dynamic Announcements Dashboard Widget */}
-        <GlassCard hoverEffect={false} style={{ background: 'linear-gradient(135deg, rgba(20, 184, 166, 0.08) 0%, rgba(0, 229, 255, 0.05) 100%)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
-            <BellRing size={18} color="hsl(var(--accent-gold))" />
-            <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>University Announcements</h3>
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div 
-              style={{
-                padding: '16px',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.04)'
-              }}
-            >
-              <span className="badge badge-warning" style={{ marginBottom: '8px' }}>Important</span>
-              <h4 style={{ fontSize: '0.88rem', fontWeight: '700', marginBottom: '4px' }}>
-                Term Exam Schedules Released
-              </h4>
-              <p style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
-                The comprehensive scheduling framework for the final examinations of Second Semester 2026 is published on the public board. Faculty heads are requested to coordinate invigilator allocations.
-              </p>
-            </div>
-
-            <div 
-              style={{
-                padding: '16px',
-                borderRadius: '12px',
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.04)'
-              }}
-            >
-              <span className="badge badge-info" style={{ marginBottom: '8px' }}>General</span>
-              <h4 style={{ fontSize: '0.88rem', fontWeight: '700', marginBottom: '4px' }}>
-                29th Graduation Ceremony Preparations
-              </h4>
-              <p style={{ fontSize: '0.8rem', color: 'hsl(var(--text-secondary))', lineHeight: 1.4 }}>
-                Graduand registration forms have opened. Students are required to verify their academic credits clears at the Registrar Office by the end of next month.
-              </p>
-            </div>
-          </div>
-        </GlassCard>
       </div>
-
     </div>
   );
+};
+
+const linkBtn = {
+  background: 'none',
+  border: 'none',
+  color: 'hsl(var(--accent-cyan))',
+  fontSize: '0.76rem',
+  fontWeight: '600',
+  cursor: 'pointer',
+  display: 'flex',
+  alignItems: 'center',
+  gap: '4px',
 };
 
 export default DashboardOverview;

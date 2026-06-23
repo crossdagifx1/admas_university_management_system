@@ -1,6 +1,6 @@
 import React from 'react';
 
-const GlassCard = ({ children, className = '', hoverEffect = true, onClick }) => {
+const GlassCard = ({ children, className = '', hoverEffect = true, onClick, style }) => {
   return (
     <div
       onClick={onClick}
@@ -9,6 +9,7 @@ const GlassCard = ({ children, className = '', hoverEffect = true, onClick }) =>
         padding: '24px',
         position: 'relative',
         overflow: 'hidden',
+        ...style,
       }}
     >
       {/* Subtle border glow reflection */}

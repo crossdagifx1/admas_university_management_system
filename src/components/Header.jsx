@@ -1,18 +1,25 @@
 import React, { useState } from 'react';
-import { Search, Bell, Calendar, HelpCircle, Check, CircleAlert } from 'lucide-react';
+import { Bell, Calendar, Check, CircleAlert } from 'lucide-react';
+import { useData } from '../context/DataContext';
 
-const Header = ({ title, user, searchTerm, setSearchTerm }) => {
+const SEED_NOTES = [
+  { id: 'seed-1', text: "Room LAB-1 schedule conflict detected", time: "1 hour ago", type: "warning", read: false },
+  { id: 'seed-2', text: "Monthly activity report generated", time: "4 hours ago", type: "success", read: false },
+];
+
+const Header = ({ title, subtitle, user }) => {
+  const { notifications: liveNotes, markNotificationsRead } = useData();
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: "System Backup Completed", time: "5 mins ago", type: "success", read: false },
-    { id: 2, text: "New Student Enrollment request", time: "1 hour ago", type: "info", read: false },
-    { id: 3, text: "Faculty meeting scheduled for Friday", time: "4 hours ago", type: "warning", read: false }
-  ]);
+  const [seedRead, setSeedRead] = useState(false);
 
+  // Live trainer-submission notifications stack on top of the seed items.
+  const seed = SEED_NOTES.map((n) => ({ ...n, read: n.read || seedRead }));
+  const notifications = [...liveNotes, ...seed];
   const hasUnread = notifications.some(n => !n.read);
 
   const markAllRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, read: true })));
+    markNotificationsRead();
+    setSeedRead(true);
   };
 
   const getNotificationIcon = (type) => {
@@ -43,43 +50,12 @@ const Header = ({ title, user, searchTerm, setSearchTerm }) => {
           {title}
         </h1>
         <p style={{ color: 'hsl(var(--text-secondary))', fontSize: '0.88rem', marginTop: '4px' }}>
-          Welcome back, <span style={{ color: 'hsl(var(--accent-cyan))', fontWeight: '500' }}>{user?.name || 'Admin'}</span>. Here is your dashboard summary.
+          {subtitle || <>Welcome back, <span style={{ color: 'hsl(var(--accent-cyan))', fontWeight: '500' }}>{user?.name || 'Admin'}</span>.</>}
         </p>
       </div>
 
       {/* Quick Utilities */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        {/* Search Input */}
-        <div style={{ position: 'relative', width: '260px' }}>
-          <input
-            type="text"
-            placeholder="Search dashboard..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="input-field"
-            style={{
-              paddingLeft: '44px',
-              paddingRight: '16px',
-              height: '44px',
-              fontSize: '0.88rem',
-              background: 'rgba(255, 255, 255, 0.02)',
-              borderRadius: '12px',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
-            }}
-          />
-          <Search 
-            size={18} 
-            color="hsl(var(--text-muted))" 
-            style={{ 
-              position: 'absolute', 
-              left: '16px', 
-              top: '50%', 
-              transform: 'translateY(-50%)',
-              pointerEvents: 'none'
-            }} 
-          />
-        </div>
-
         {/* Calendar / Date Widget */}
         <div 
           style={{

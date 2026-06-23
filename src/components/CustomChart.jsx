@@ -13,16 +13,20 @@ export const EnrollmentChart = ({ data }) => {
   const chartHeight = height - paddingTop - paddingBottom;
 
   // Data processing
-  const maxVal = Math.max(...data.map(d => d.value)) * 1.15;
+  const rawMax = data.length > 0 ? Math.max(...data.map(d => d.value)) : 0;
+  const maxVal = (rawMax || 10) * 1.15;
   const minVal = 0;
 
   const points = data.map((d, index) => {
-    const x = paddingLeft + (index / (data.length - 1)) * chartWidth;
+    const denom = data.length > 1 ? data.length - 1 : 1;
+    const x = paddingLeft + (index / denom) * chartWidth;
     const y = paddingTop + chartHeight - ((d.value - minVal) / (maxVal - minVal)) * chartHeight;
     return { x, y, label: d.label, value: d.value };
   });
 
-  const linePath = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
+  const linePath = points.length > 0
+    ? points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ')
+    : '';
   
   // Create area path under the line for the gradient fill
   const areaPath = points.length > 0 
@@ -144,6 +148,92 @@ export const EnrollmentChart = ({ data }) => {
   );
 };
 
+const DONUT_COLORS = ['#00e5ff', '#14b8a6', '#10b981', '#eab308', '#f43f5e', '#8b5cf6', '#38bdf8'];
+
+export const DonutChart = ({ data, size = 180, thickness = 26 }) => {
+  const total = data.reduce((s, d) => s + d.value, 0) || 1;
+  const radius = (size - thickness) / 2;
+  const cx = size / 2;
+  const cy = size / 2;
+  const circumference = 2 * Math.PI * radius;
+  let offset = 0;
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '24px', flexWrap: 'wrap' }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} style={{ transform: 'rotate(-90deg)' }}>
+        <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={thickness} />
+        {data.map((d, i) => {
+          const len = (d.value / total) * circumference;
+          const seg = (
+            <circle
+              key={i}
+              cx={cx}
+              cy={cy}
+              r={radius}
+              fill="none"
+              stroke={DONUT_COLORS[i % DONUT_COLORS.length]}
+              strokeWidth={thickness}
+              strokeDasharray={`${len} ${circumference - len}`}
+              strokeDashoffset={-offset}
+              strokeLinecap="butt"
+            />
+          );
+          offset += len;
+          return seg;
+        })}
+      </svg>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {data.map((d, i) => (
+          <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.8rem' }}>
+            <span style={{ width: '10px', height: '10px', borderRadius: '3px', background: DONUT_COLORS[i % DONUT_COLORS.length] }} />
+            <span style={{ color: 'hsl(var(--text-secondary))' }}>{d.label}</span>
+            <span style={{ color: 'hsl(var(--text-primary))', fontWeight: '700', marginLeft: 'auto', fontFamily: 'Outfit' }}>{d.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+export const RadarChart = ({ axes, size = 260 }) => {
+  // axes: [{ label, value (0-100) }]
+  const cx = size / 2;
+  const cy = size / 2;
+  const r = size / 2 - 40;
+  const n = axes.length;
+  const angle = (i) => (Math.PI * 2 * i) / n - Math.PI / 2;
+  const point = (i, ratio) => ({
+    x: cx + r * ratio * Math.cos(angle(i)),
+    y: cy + r * ratio * Math.sin(angle(i)),
+  });
+  const poly = axes.map((a, i) => { const p = point(i, a.value / 100); return `${p.x},${p.y}`; }).join(' ');
+
+  return (
+    <svg width="100%" height={size} viewBox={`0 0 ${size} ${size}`} style={{ overflow: 'visible' }}>
+      {[0.25, 0.5, 0.75, 1].map((ring, ri) => (
+        <polygon
+          key={ri}
+          points={axes.map((_, i) => { const p = point(i, ring); return `${p.x},${p.y}`; }).join(' ')}
+          fill="none"
+          stroke="rgba(255,255,255,0.06)"
+        />
+      ))}
+      {axes.map((a, i) => {
+        const p = point(i, 1);
+        const lp = point(i, 1.16);
+        return (
+          <g key={i}>
+            <line x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="rgba(255,255,255,0.06)" />
+            <text x={lp.x} y={lp.y} fill="#a9abb3" fontSize="10" textAnchor="middle" dominantBaseline="middle">{a.label}</text>
+          </g>
+        );
+      })}
+      <polygon points={poly} fill="rgba(0,229,255,0.18)" stroke="#00e5ff" strokeWidth="2" />
+      {axes.map((a, i) => { const p = point(i, a.value / 100); return <circle key={i} cx={p.x} cy={p.y} r="3" fill="#00e5ff" />; })}
+    </svg>
+  );
+};
+
 export const DistributionChart = ({ data }) => {
   const width = 500;
   const height = 220;
@@ -155,7 +245,8 @@ export const DistributionChart = ({ data }) => {
   const chartWidth = width - paddingLeft - paddingRight;
   const chartHeight = height - paddingTop - paddingBottom;
 
-  const maxVal = Math.max(...data.map(d => d.value)) * 1.1;
+  const rawMax = data.length > 0 ? Math.max(...data.map(d => d.value)) : 0;
+  const maxVal = (rawMax || 10) * 1.1;
 
   return (
     <div style={{ width: '100%' }}>

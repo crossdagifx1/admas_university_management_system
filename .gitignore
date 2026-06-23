@@ -115,3 +115,13 @@ dist
 # OS metadata
 .DS_Store
 Thumbs.db
+
+# Generated SQLite DB
+db/atms.db
+
+# Supabase CLI local/temp + secrets (never commit DB passwords or access tokens)
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+
+.vercel

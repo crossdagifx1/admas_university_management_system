@@ -1,0 +1,8 @@
+# Supabase CLI project config — https://supabase.com/docs/guides/cli/config
+# Minimal on purpose; `supabase link` + `supabase db push` only need project_id.
+# (Run `supabase init` if your CLI version wants the full default file regenerated.)
+project_id = "admas_university_management_system"
+
+[db]
+# Local Postgres major version (used only by `supabase start`; harmless for db push).
+major_version = 15

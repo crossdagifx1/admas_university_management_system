@@ -9,7 +9,7 @@ import {
   Layers, 
   Terminal,
   RefreshCw,
-  CheckCircle2
+  CircleCheck
 } from 'lucide-react';
 import GlassCard from '../components/GlassCard';
 
@@ -174,7 +174,7 @@ const SettingsPage = () => {
                     lineHeight: 1.3
                   }}
                 >
-                  <CheckCircle2 size={16} style={{ flexShrink: 0 }} />
+                  <CircleCheck size={16} style={{ flexShrink: 0 }} />
                   <span>{backupMessage}</span>
                 </div>
               )}
